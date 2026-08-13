@@ -215,4 +215,72 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 })
 
-export { registerUser, loginUser, refreshAccessToken, logoutUser };
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword } = req.body
+    
+    const user = await User.findById(req.user?._id)
+    
+    const isPasswordValid = await user.isPasswordCorrect(oldPassword)
+
+    if (!isPasswordValid) {
+        throw new ApiError(401,"old password is incorrect")
+    }
+
+    user.password = newPassword;
+
+    await user.save({ validateBeforeSave: false })
+    
+    return res.status(200).json(new ApiResponse(200, {}, "Password changed succesfully"))
+    
+});
+
+const getCurrentPassword = asyncHandler(async (req, res) => {
+    return res
+      .status(200)
+      .json(new ApiResponse(200,req.user , "Current user details"));
+})
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+    const { fullname, email } = req.body
+    
+    if (!fullname) {
+        throw new ApiError (400,"Fullname is required")
+    }
+    if (!email) {
+        throw new ApiError(400,"email is required")
+    }
+
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._ID,
+        {
+            $set: {
+                fullname,
+                email:email
+            }
+        },
+        {new:true}
+    ).select("-password -refreshToken")
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, req.user, "Account detailed update successfully"));
+})
+
+const updateUserAvatar = asyncHandler(async (req, res) => { 
+
+})
+
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+
+});
+
+
+
+export {
+  registerUser,
+  loginUser,
+  refreshAccessToken,
+  logoutUser,
+  changeCurrentPassword,
+};
