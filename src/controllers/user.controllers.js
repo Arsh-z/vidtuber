@@ -268,11 +268,60 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 })
 
 const updateUserAvatar = asyncHandler(async (req, res) => { 
+    const avatarLocalPath = req.files?.path
+
+    if (!avatarLocalPath) {
+        throw new ApiError (400,"file is required")
+    }
+
+    const avatar = await uploadOnCLoudinary(avatarLocalPath)
+
+    if (!avatar.url) {
+        throw new ApiError(500, "something went wrong while uploading avatar")
+        
+
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $SET: {
+                avatar: avatar.url
+            }
+        },
+        {new: true}
+    ).select("-password -refreshToken")
+
+    return res.status(200).json(new ApiResponse(200,user,"Avatar Updated Successfully"))
 
 })
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
+  const coverImageLocalPath = req.file?.path;
 
+  if (!coverImageLocalPath) {
+    throw new ApiError(400, "File is required");
+  }
+
+  const coverImage = await uploadOnCLoudinary(coverImageLocalPath);
+
+  if (!coverImage.url) {
+    throw new ApiError(500, "something went wrong while uploading avatar");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $SET: {
+        avatar: coverImage.url,
+      },
+    },
+    { new: true }
+  ).select("-password -refreshToken");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Cover image Updated Successfully"));
 });
 
 
@@ -283,4 +332,8 @@ export {
   refreshAccessToken,
   logoutUser,
   changeCurrentPassword,
+  getCurrentPassword,
+  updateAccountDetails,
+  updateUserAvatar,
+  updateUserCoverImage,
 };
